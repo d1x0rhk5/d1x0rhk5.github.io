@@ -1,7 +1,7 @@
 ---
 layout: post
 comments: false
-categories: works
+categories: Works
 ---
 
 ## Background
