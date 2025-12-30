@@ -60,7 +60,7 @@ function jsonp(src, callbackParameter, onSuccess, onError) {
 
 ```
 
-data-jsonp 값이 그대로 <script src>로 삽입됩니다.
+data-jsonp 값이 그대로 `<script src>`로 삽입됩니다.
 
 ```jsx
 <pre class="language-javascript" data-src="/" data-dependencies="/../../plugins/jsonp-highlight/prism-jsonp-highlight" data-jsonp="data:text/javascript;base64,YWxlcnQoKQ==#"></pre>
