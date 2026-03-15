@@ -1,5 +1,5 @@
 <header>
-  {% assign nav_pages = site.pages | where_exp: "item", "item.title and item.url != '/' and item.url != '/index.html'" | sort: "path" %}
+  {% assign nav_pages = site.pages | sort: "path" %}
   <nav class="navbar navbar-inverse site-nav-shell">
     <div class="container">
       <div class="navbar-header">
@@ -20,9 +20,11 @@
             <a href="{{ site.baseurl }}/">Home</a>
           </li>
           {% for p in nav_pages %}
-            <li{% if p.url == page.url %} class="active"{% endif %}>
-              <a href="{{ p.url | prepend: site.baseurl }}">{{ p.title }}</a>
-            </li>
+            {% if p.title and p.url != "/" and p.url != "/index.html" %}
+              <li{% if p.url == page.url %} class="active"{% endif %}>
+                <a href="{{ p.url | prepend: site.baseurl }}">{{ p.title }}</a>
+              </li>
+            {% endif %}
           {% endfor %}
         </ul>
       </div>
