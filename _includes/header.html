@@ -1,43 +1,31 @@
 <header>
-
-<!-- navbar -->
-  <nav class="navbar navbar-inverse">
-  <div class="container">
-    <!-- Brand and toggle get grouped for better mobile display -->
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <a class="navbar-brand" href="{{ site.baseurl }}/">{{ site.title }}</a>
-      <p class="navbar-text"></p>
+  {% assign nav_pages = site.pages | where_exp: "item", "item.title and item.url != '/' and item.url != '/index.html'" | sort: "path" %}
+  <nav class="navbar navbar-inverse site-nav-shell">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#site-nav-links">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand site-brand" href="{{ site.baseurl }}/">
+          <img class="site-avatar" src="{{ "/static/img/patawang-profile.png" | prepend: site.baseurl }}" alt="patawang profile">
+          <span>{{ site.title }}</span>
+        </a>
+      </div>
+      <div class="collapse navbar-collapse" id="site-nav-links">
+        <ul class="nav navbar-nav navbar-right">
+          <li{% if page.url == "/" or page.url == "/index.html" %} class="active"{% endif %}>
+            <a href="{{ site.baseurl }}/">Home</a>
+          </li>
+          {% for p in nav_pages %}
+            <li{% if p.url == page.url %} class="active"{% endif %}>
+              <a href="{{ p.url | prepend: site.baseurl }}">{{ p.title }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
     </div>
-    <!-- Collect the nav links, forms, and other content for toggling -->
-    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-      <ul class="nav navbar-nav navbar-right">
-
-        {% if page.url == "/index.html" %}
-          <li class="active">
-          {% else %}
-          <li>
-        {% endif %}
-        <a href="{{ site.baseurl }}/">Home</a></li>
-
-        {% for p in site.pages %}
-          {% if p.title %}
-            {% if p.url == page.url %}
-              <li class="active">
-              {% else %}
-              <li>
-            {% endif %}
-            <a href="{{ p.url | prepend: site.baseurl }}"><span class="glyphicon {{ p.icon }}"></span> {{ p.title }}</a></li>
-          {% endif %}
-        {% endfor %}
-      </ul>
-    </div><!-- /.navbar-collapse -->
-  </div><!-- /.container-fluid -->
-</nav>
-
+  </nav>
 </header>
