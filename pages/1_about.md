@@ -10,7 +10,7 @@ permalink: /about/
 
 ## About me
 
-My name is Tae Kwan Lee, and I am a 24-year-old student studying at Korea University.
+My name is Tae Kwan Lee, and I am a 24-year-old student studying at KAIST.
 
 ### CV
 [View CV]({{ "/static/CV.pdf" | prepend: site.baseurl }})
