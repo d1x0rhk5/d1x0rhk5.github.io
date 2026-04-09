@@ -1,0 +1,69 @@
+<!DOCTYPE html><html lang=ko><script type=importmap>{"imports":{"2EEUB":"./waldokun.7e88dd59.png","4Z5W0":"./human.47dba648.txt","7s1Yr":"./kubin.f3647b70.png","8YRCW":"./Box2D.simd.dd31b167.wasm","MIq0h":"./Box2D.b9b16b27.wasm","bEMOV":"./Box2D.simd.e2d8611a.js","c3H15":"./kkwak.673a610d.png","cWbKY":"./ff.7fdc9e82.svg","e0nV0":"./junyoop.d27f0cbf.png","eRflN":"./Box2D.0f8ac9fb.js","kMY5r":"./chamru.d6926a56.png"}}</script><meta charset=UTF-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width, initial-scale=1.0"><title>욕망의 항아리 달리기 뽑기</title><meta name=description content="욕망의 항아리 분위기의 2중 달리기 추첨. 숫자 0-50과 human.txt 명단이 동시에 달립니다."><meta name=theme-color content=#081a13><link rel=icon type=image/png sizes=32x32 href=favicon-32x32.b3414860.png><link rel=stylesheet href=roulette.b298027c.css><body>
+  <div class=app-shell>
+    <div class="page-aura page-aura-left"></div>
+    <div class="page-aura page-aura-right"></div>
+
+    <header class=hero-panel>
+      <div class=hero-copy>
+        <p class=eyebrow>Dual Marble Ritual</p>
+        <h1>욕망의 항아리 달리기 뽑기</h1>
+        <p class=lead>
+          두 개의 항아리가 동시에 열린다. 하나는 <strong>0-50 숫자</strong>, 하나는
+          <strong>human.txt 명단</strong>. 사람 명단은 <strong>1인당 7개의 공</strong>으로 장전된다.
+        </p>
+        <p class=omen id=omenLine>오늘의 공은 끝까지 사람을 속인다.</p>
+      </div>
+
+      <div class=hero-controls>
+        <button id=btnStart class=primary-action>봉인 해제</button>
+        <button id=btnReloadHumans class=secondary-action>human.txt 다시 읽기</button>
+        <div class=status-card>
+          <span class=status-label>Status</span>
+          <strong id=appStatus>룰렛 엔진을 깨우는 중...</strong>
+          <span class=status-note id=humanFileNote>human.txt 대기 중</span>
+        </div>
+      </div>
+    </header>
+
+    <main class=arena-grid>
+      <section class=game-panel id=numbers-panel data-state=idle>
+        <div class=panel-head>
+          <div>
+            <p class=panel-kicker>Number Cauldron</p>
+            <h2>0-50 숫자 추첨</h2>
+          </div>
+          <span class=panel-meta id=numbers-meta>51개의 공 / 0부터 50까지</span>
+        </div>
+        <div class=stage-shell>
+          <div class=panel-overlay>
+            <span class=overlay-label>선택된 숫자</span>
+            <strong class=overlay-result id=numbers-result>???</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class=game-panel id=humans-panel data-state=idle>
+        <div class=panel-head>
+          <div>
+            <p class=panel-kicker>Human Cauldron</p>
+            <h2>human.txt 명단 추첨</h2>
+          </div>
+          <span class=panel-meta id=humans-meta>0명 / 총 0개의 공</span>
+        </div>
+        <div class=stage-shell>
+          <div class=panel-overlay>
+            <span class=overlay-label>선택된 사람</span>
+            <strong class=overlay-result id=humans-result>???</strong>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class=round-summary id=roundSummary hidden></aside>
+  </div>
+
+  <div id=countdown class=countdown hidden>3</div>
+
+  <script type=module src=roulette.055ab6cb.js></script>
+
+
