@@ -8,9 +8,9 @@ categories: Works
 
 ---
 
-Prism의 autoloader는 data-dependencies 값을 바탕으로 스크립트를 동적으로 로드하며, jsonp‑highlight는 data-jsonp를 사용해 `<script src=...>`를 삽입합니다.
+Prism의 autoloader는 data-dependencies 값을 바탕으로 스크립트를 동적으로 로드하며, jsonp‑highlight는 data-jsonp를 사용해 `<script src=...>`를 삽입한다.
 
-CSP에 strict-dynamic이 설정되어 있으면, nonce가 붙은 Prism 스크립트가 추가한 스크립트가 출처 제한 없이 실행될 수 있어 XSS 체인이 성립합니다.
+CSP에 strict-dynamic이 설정되어 있으면 nonce가 붙은 Prism 스크립트가 추가한 스크립트가 출처 제한 없이 실행될 수 있어 XSS 체인이 성립한다.
 
 - **Prism Autoloader**
 
@@ -31,7 +31,7 @@ function getLanguagePath(lang) {
 }
 ```
 
-`getDependencies()` 가 반환한 문자열들이 그대로 `getLanguagePath(lang)` 의 lang으로 들어가게 됩니다. `data-dependencies="...”`에 있는 각 항목이 deps 배열에 들어가고, 그 항목이 lang으로 그대로 전달되어 경로 문자열에 합쳐집니다.
+`getDependencies()`가 반환한 문자열은 그대로 `getLanguagePath(lang)`의 lang으로 들어간다. `data-dependencies="…”`에 있는 각 항목이 deps 배열에 들어가고, 그 항목이 lang으로 그대로 전달되어 경로 문자열에 합쳐진다.
 
 ```
 최종 src = languages_path + "prism-" + (data-dependencies 값) + ".min.js"
@@ -41,7 +41,7 @@ https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/
   + ".min.js"
 ```
 
-결국 정규화 이후에 `https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/plugins/jsonp-highlight/prism-jsonp-highlight.min.js` 가 되어 다른 스크립트가 로딩됩니다.
+결국 정규화 이후에는 `https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/plugins/jsonp-highlight/prism-jsonp-highlight.min.js`가 되어 다른 스크립트가 로딩된다.
 
 - **JSONP Highlight**
 
@@ -60,10 +60,10 @@ function jsonp(src, callbackParameter, onSuccess, onError) {
 
 ```
 
-data-jsonp 값이 그대로 `<script src>`로 삽입됩니다.
+data-jsonp 값이 그대로 `<script src>`로 삽입된다.
 
 ```jsx
 <pre class="language-javascript" data-src="/" data-dependencies="/../../plugins/jsonp-highlight/prism-jsonp-highlight" data-jsonp="data:text/javascript;base64,YWxlcnQoKQ==#"></pre>
 ```
 
-이런식으로 xss가 가능합니다.
+이런 식으로 xss가 가능하다.
