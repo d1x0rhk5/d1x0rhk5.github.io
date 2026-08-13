@@ -216,24 +216,6 @@ img {
     padding-block: 76px 24px;
 }
 
-.hero {
-    display: grid;
-    grid-template-columns: 88px minmax(0, 1fr);
-    align-items: center;
-    gap: 28px;
-    width: min(100%, var(--content-width));
-    margin: 18px auto 104px;
-}
-
-.hero-avatar {
-    width: 88px;
-    height: 88px;
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    background: var(--surface);
-    object-fit: cover;
-}
-
 .section-label {
     margin: 0 0 8px;
     color: var(--accent);
@@ -242,20 +224,6 @@ img {
     font-weight: 600;
     letter-spacing: 0.09em;
     text-transform: uppercase;
-}
-
-.hero h1 {
-    margin: 0 0 9px;
-    font-size: clamp(30px, 5vw, 42px);
-    line-height: 1.12;
-    letter-spacing: -0.045em;
-}
-
-.hero-copy,
-.hero-copy p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 17px;
 }
 
 .post-index {
@@ -828,26 +796,6 @@ img {
 
     .main {
         padding-top: 52px;
-    }
-
-    .hero {
-        grid-template-columns: 68px minmax(0, 1fr);
-        gap: 18px;
-        margin: 8px auto 72px;
-    }
-
-    .hero-avatar {
-        width: 68px;
-        height: 68px;
-    }
-
-    .hero h1 {
-        font-size: 30px;
-    }
-
-    .hero-copy,
-    .hero-copy p {
-        font-size: 15px;
     }
 
     .section-header {
