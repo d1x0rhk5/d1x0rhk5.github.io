@@ -1,29 +1,29 @@
 ---
 layout: default
 ---
-<section class="hero-card">
+<section class="hero" aria-labelledby="site-intro-title">
+  <img class="hero-avatar" src="{{ "/static/img/crong-avatar.png" | prepend: site.baseurl }}" alt="Crong" width="88" height="88">
   <div class="hero-content">
-    <div class="hero-tag">Security research notes</div>
-    <article class="hero-copy">
-      {{ content }}
-    </article>
+    <p class="section-label">Security research notes</p>
+    <h1 id="site-intro-title">{{ site.title }}</h1>
+    <div class="hero-copy">{{ content }}</div>
   </div>
 </section>
 
-<section id="index" class="section-card">
+<section id="index" class="post-index" aria-labelledby="recent-writing-title">
   <div class="section-header">
     <div>
       <p class="section-label">Posts</p>
-      <h2 class="section-title">Recent writing</h2>
+      <h2 class="section-title" id="recent-writing-title">Recent writing</h2>
     </div>
     <span class="section-count">{{ site.posts | size }} posts</span>
   </div>
   <div class="tag-filter" data-post-filter>
-    <button class="tag-chip is-active" type="button" data-category="all">All</button>
+    <button class="tag-chip is-active" type="button" data-category="all" aria-pressed="true">All</button>
     {% assign sorted_categories = site.categories | sort %}
     {% for category in sorted_categories %}
       {% assign category_name = category | first %}
-      <button class="tag-chip" type="button" data-category="{{ category_name | slugify }}">
+      <button class="tag-chip" type="button" data-category="{{ category_name | slugify }}" aria-pressed="false">
         {{ category_name }}
         <span>{{ category | last | size }}</span>
       </button>
@@ -33,13 +33,9 @@ layout: default
     {% for post in site.posts %}
       {% assign first_category = post.categories | first %}
       <a class="post-list-item" href="{{ post.url | prepend: site.baseurl }}" data-category="{% if first_category %}{{ first_category | slugify }}{% else %}uncategorized{% endif %}">
-        <div class="post-list-meta">
-          <span>{{ post.date | date: "%b %-d, %Y" }}</span>
-          {% if first_category %}
-            <span class="post-pill">{{ first_category }}</span>
-          {% endif %}
-        </div>
+        <time class="post-list-date" datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %-d, %Y" }}</time>
         <h3>{{ post.title }}</h3>
+        {% if first_category %}<span class="post-list-category">{{ first_category }}</span>{% endif %}
       </a>
     {% endfor %}
   </div>

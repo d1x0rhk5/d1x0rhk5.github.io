@@ -2,27 +2,42 @@
 layout: default
 ---
 <div class="content-shell">
-  <article class="article-card">
+  <article class="article">
     <header class="post-header">
       <p class="section-label">Post</p>
       <h1>{{ page.title }}</h1>
       <p class="post-header-meta">
-        <span>{{ page.date | date: "%b %-d, %Y" }}</span>
+        <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%b %-d, %Y" }}</time>
         {% if page.author %}<span>{{ page.author }}</span>{% endif %}
         {% if page.meta %}<span>{{ page.meta }}</span>{% endif %}
       </p>
       {% assign post_tags = page.categories | concat: page.tags | uniq %}
       {% if post_tags.size > 0 %}
         <div class="post-tag-list">
-          {% for tag in post_tags %}
-            <span class="post-pill">{{ tag }}</span>
-          {% endfor %}
+          {% for tag in post_tags %}<span class="post-pill">{{ tag }}</span>{% endfor %}
         </div>
       {% endif %}
     </header>
     <section class="page-content">
       {{ content }}
     </section>
+
+    {% if page.previous or page.next %}
+      <nav class="post-navigation" aria-label="Post navigation">
+        {% if page.previous %}
+          <a class="post-navigation-item" href="{{ page.previous.url | prepend: site.baseurl }}">
+            <span>Previous</span>
+            <strong>{{ page.previous.title }}</strong>
+          </a>
+        {% else %}<span></span>{% endif %}
+        {% if page.next %}
+          <a class="post-navigation-item post-navigation-next" href="{{ page.next.url | prepend: site.baseurl }}">
+            <span>Next</span>
+            <strong>{{ page.next.title }}</strong>
+          </a>
+        {% endif %}
+      </nav>
+    {% endif %}
   </article>
 
   {% if page.comments != false %}

@@ -1,15 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 
   {% include head.html %}
 
   <body>
 
+    <a class="skip-link" href="#main">Skip to content</a>
+
     {% include header.html %}
 
-    <div id="main" class="container main">
+    <main id="main" class="container main">
       {{ content }}
-    </div>
+    </main>
 
     {% include footer.html %}
   

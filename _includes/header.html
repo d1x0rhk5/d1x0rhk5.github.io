@@ -1,33 +1,21 @@
-<header>
+<header class="site-header">
   {% assign nav_pages = site.pages | sort: "path" %}
-  <nav class="navbar navbar-inverse site-nav-shell">
-    <div class="container">
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#site-nav-links">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand site-brand" href="{{ site.baseurl }}/">
-          <img class="site-avatar" src="{{ "/static/img/crong-avatar.png" | prepend: site.baseurl }}" alt="Crong avatar">
-          <span>{{ site.title }}</span>
-        </a>
-      </div>
-      <div class="collapse navbar-collapse" id="site-nav-links">
-        <ul class="nav navbar-nav navbar-right">
-          <li{% if page.url == "/" or page.url == "/index.html" %} class="active"{% endif %}>
-            <a href="{{ site.baseurl }}/">Home</a>
-          </li>
-          {% for p in nav_pages %}
-            {% if p.title and p.url != "/" and p.url != "/index.html" %}
-              <li{% if p.url == page.url %} class="active"{% endif %}>
-                <a href="{{ p.url | prepend: site.baseurl }}">{{ p.title }}</a>
-              </li>
-            {% endif %}
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-  </nav>
+  <div class="container site-header-inner">
+    <a class="site-brand" href="{{ site.baseurl }}/" aria-label="{{ site.title }} home">
+      <img class="site-avatar" src="{{ "/static/img/crong-avatar.png" | prepend: site.baseurl }}" alt="" width="40" height="40">
+      <span>{{ site.title }}</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a{% if page.url == "/" or page.url == "/index.html" %} class="is-active" aria-current="page"{% endif %} href="{{ site.baseurl }}/">Home</a>
+      {% for p in nav_pages %}
+        {% if p.title and p.url != "/" and p.url != "/index.html" %}
+          <a{% if p.url == page.url %} class="is-active" aria-current="page"{% endif %} href="{{ p.url | prepend: site.baseurl }}">{{ p.title }}</a>
+        {% endif %}
+      {% endfor %}
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme">
+        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg>
+        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z"></path></svg>
+      </button>
+    </nav>
+  </div>
 </header>
