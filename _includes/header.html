@@ -2,13 +2,13 @@
   {% assign nav_pages = site.pages | sort: "path" %}
   <div class="container site-header-inner">
     <a class="site-brand" href="{{ site.baseurl }}/" aria-label="{{ site.title }} home">
-      <img class="site-avatar" src="{{ "/static/img/crong-avatar.png" | prepend: site.baseurl }}" alt="" width="40" height="40">
+      <img class="site-avatar" src="{{ "/static/img/crong-source.webp" | prepend: site.baseurl }}" alt="" width="40" height="40">
       <span>{{ site.title }}</span>
     </a>
     <nav class="site-nav" aria-label="Primary navigation">
       <a{% if page.url == "/" or page.url == "/index.html" %} class="is-active" aria-current="page"{% endif %} href="{{ site.baseurl }}/">Home</a>
       {% for p in nav_pages %}
-        {% if p.title and p.url != "/" and p.url != "/index.html" %}
+        {% if p.title and p.url != "/" and p.url != "/index.html" and p.url != "/THIRD_PARTY_NOTICES/" %}
           <a{% if p.url == page.url %} class="is-active" aria-current="page"{% endif %} href="{{ p.url | prepend: site.baseurl }}">{{ p.title }}</a>
         {% endif %}
       {% endfor %}
