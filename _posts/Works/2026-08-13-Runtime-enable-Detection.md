@@ -15,7 +15,7 @@ await cdp.send("Runtime.enable");
 
 `Runtime.enable`은 CDP의 Runtime domain을 활성화해 `executionContextCreated` 같은 Runtime event들의 보고를 시작한다. 또한 Runtime domain이 활성화되면 `Runtime.consoleAPICalled`를 통해 console 호출이 Inspector 쪽으로 전달된다.
 
-이 과정에서 Inspector는 전달된 JavaScript 객체의 속성을 조회하거나 직렬화한다. JavaScript의 객체 접근은 Getter나 Proxy처럼 속성 접근 자체에 사용자 코드를 삽입할 수 있기 때문에, Inspector가 객체를 조회하는 것이 페이지에서 탐지할 수 있는 side effect를 발생시킬 수 있다.
+이 과정에서 Inspector는 전달된 JavaScript 객체의 속성을 조회하거나 직렬화한다. JavaScript 객체는 getter나 Proxy를 통해 속성 접근 자체에 사용자 코드를 삽입할 수 있으므로, Inspector의 조회가 페이지에서 관측 가능한 side effect를 발생시킬 수 있다.
 
 이러한 특성을 이용해 `Runtime.enable`을 탐지하는 여러 기법이 있었으며, V8 역시 이를 막기 위해 Inspector 코드를 수정했다.
 
@@ -95,9 +95,9 @@ V8 14.6의 `V8RuntimeAgentImpl::enable()`은 Runtime domain을 활성화한 뒤 
 
 [V8 14.6 source의 V8RuntimeAgentImpl::enable()](https://chromium.googlesource.com/v8/v8/+/refs/branch-heads/14.6/src/inspector/v8-runtime-agent-impl.cc#1101)
 
-2025년에 `Runtime.enable`을 탐지할 수 있는 패치는 preview 중 getter가 V8 내부 builtin인지 판별하기 위해 bound function의 가장 안쪽 함수까지 내려간 뒤 해당 함수의 ScriptId를 검사했다.
+2025년에 추가된 패치는 Error property의 getter가 V8 내부 builtin인지 판별하기 위해 bound function의 가장 안쪽 target까지 내려간 뒤 해당 함수의 `ScriptId`를 검사했다.
 
-때문에 탐지 코드와 같이 보이는 bound target은 native `Function.prototype.call`이지만 실행하면 다른 함수가 실행되는 방식으로 우회할 수 있다.
+이 때문에 탐지 코드처럼 겉으로 보이는 bound target은 native `Function.prototype.call`이지만, 실제 호출 시에는 페이지가 정의한 다른 함수가 실행되도록 우회할 수 있었다.
 
 아래 형태도 마찬가지다.
 
@@ -148,7 +148,7 @@ console.debug(error);
 
 Inspector가 Error의 `stack`을 처리할 때 사용하는 `getErrorProperty()`는 먼저 객체 자신의 property descriptor를 확인한다. own descriptor가 없으면 현재 구현은 다음과 같이 일반 `Get()`으로 fallback한다.
 
-```javascript
+```c++
 if (!descriptor->IsObject()) return object->Get(context, name);
 ```
 
@@ -158,13 +158,15 @@ JavaScript의 일반 `Get` semantics는 property가 현재 객체에 없으면 p
 
 ### 현재 상태
 
-아직 패치되지 않아 backlog와 live message 양쪽 모두에서 탐지할 수 있다.
+글 작성 시점인 2026년 8월 13일의 V8 main source에도 이 fallback이 남아 있어 backlog와 live message 양쪽 모두에서 탐지할 수 있다.
+
+[V8 main의 `getErrorProperty()`](https://chromium.googlesource.com/v8/v8/+/refs/heads/main/src/inspector/value-mirror.cc#274)
 
 > 공개된 탐지 기법과 V8의 패치에 대해 알아보면서 추가적인 `Runtime.enable` 가능 경로가 있는지 직접 찾아보았다. 그 결과 `Runtime.enable` 단일 명령을 탐지할 수 있는 두 가지 추가 경로를 찾을 수 있었다.
 
 ## 5. Proxy
 
-현재의 `isBuiltinGetter()`에는 아직 의미 충돌이 남아 있었다.
+현재의 `isBuiltinGetter()`에는 검사 의미와 실제 호출 의미 사이의 차이가 남아 있었다.
 
 ### 탐지 코드
 
@@ -191,7 +193,7 @@ Inspector가 Error의 `stack`을 읽으면 Proxy의 `apply`가 실행되어 `det
 
 ### Root Cause
 
-현재 `getErrorProperty()`는 own accessor의 getter가 `Function`으로 보이면 `isBuiltinGetter()`로 builtin인지 검사한다. `Function`인지 검사는 `IsCallable()`을 사용하기 때문에 callable target을 감싼 Proxy도 해당 검사를 통과한다.
+현재 `getErrorProperty()`는 own accessor의 getter가 `Function`으로 보이면 `isBuiltinGetter()`로 builtin인지 검사한다. V8 API의 `IsFunction()` 검사는 callable 여부를 기준으로 하므로 callable target을 감싼 Proxy도 해당 검사를 통과한다.
 
 ```c++
 bool isBuiltinGetter(v8::Local<v8::Function> function) {
@@ -213,7 +215,7 @@ int Function::ScriptId() const {
 }
 ```
 
-Callable Proxy는 호출할 수 있으므로 `IsFunction()`을 통과하지만 `JSFunction`은 아니므로 `ScriptId()`에서 `kNoScriptId`를 받는다.
+Callable Proxy는 호출할 수 있어 `IsFunction()`을 통과하지만 `JSFunction`은 아니므로 `ScriptId()`에서 `kNoScriptId`를 받는다.
 
 Bound function도 아니기 때문에 첫 번째 if문에도 걸리지 않는다. Inspector는 페이지가 제어하는 Proxy를 builtin getter로 잘못 분류하고 `object->Get(context, "stack")`을 허용해 `Runtime.enable` 탐지가 가능하다.
 
@@ -250,7 +252,7 @@ console.debug(error);
 
 ### Root Cause
 
-`getErrorProperty()`가 직접 확인하는 stack getter는 실제 V8 builtin이다. 이 검사는 호출되는 함수의 출처만 확인하고 함수가 실행하면서 나중에 수행하는 property access까지는 검사하지 않는다.
+`getErrorProperty()`가 직접 확인하는 `stack` getter는 실제 V8 builtin이다. 이 검사는 호출되는 함수의 출처만 확인하고, 그 함수가 실행 중에 수행하는 추가 property access까지는 검사하지 않는다.
 
 ```c++
 transitioning javascript builtin RegExpPrototypeFlagsGetter(
